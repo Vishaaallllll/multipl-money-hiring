@@ -683,6 +683,16 @@ export default function App() {
           letter-spacing: -3px !important;
         }
         * { box-sizing: border-box; }
+        html, body, #root {
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          min-height: 100%;
+          background: ${T.sun};
+        }
+        body {
+          overflow-x: hidden;
+        }
         .seal { animation: press .5s cubic-bezier(.2,1.3,.4,1) both; transform-box: fill-box; transform-origin: center; }
         @keyframes press { 0%{opacity:0; transform:scale(2.4) rotate(5deg)} 70%{opacity:.95; transform:scale(.95) rotate(-11deg)} 100%{opacity:1; transform:scale(1) rotate(-9deg)} }
         .card { animation: lift .55s cubic-bezier(.2,.9,.3,1) both; }
@@ -825,12 +835,22 @@ export default function App() {
           align-items: flex-start;
           gap: 8px;
 
-          margin-top: 14px;
+          margin-top: 16px;
 
           color: ${T.bark};
-          font-size: 10.5px;
-          line-height: 1.35;
-          opacity: .78;
+          font-size: 9.6px;
+          line-height: 1.38;
+          opacity: .82;
+        }
+
+        .home-disclaimer-copy {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+        }
+
+        .home-disclaimer-copy p {
+          margin: 0;
         }
 
         .home-disclaimer svg {
@@ -1339,10 +1359,17 @@ export default function App() {
 
               <div className="home-disclaimer">
                 <ShieldIcon />
-                <span>
-                  Mutual Fund investments are subject to market risks,
-                  read all scheme related documents carefully.
-                </span>
+                <div className="home-disclaimer-copy">
+                  <p>
+                    Multipl is a AMFI registered Mutual Fund Distributor (ARN No. 319633).*Based on historical returns of Liquid Fund category.
+                  </p>
+                  <p>
+                    <strong>Warning:</strong> Investment in securities market are subject to market risks. Read all the related documents carefully before investing.
+                  </p>
+                  <p>
+                    <strong>Disclaimer:</strong> Registration granted by SEBI, enlistment with BSE and certification from NISM in no way guarantee performance of the intermediary or provide any assurance of returns to investors.
+                  </p>
+                </div>
               </div>
             </div>
 
