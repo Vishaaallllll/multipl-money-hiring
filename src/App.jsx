@@ -702,8 +702,36 @@ export default function App() {
         .hard { transition: transform .12s ease, box-shadow .12s ease; }
         .hard:hover { transform: translate(-1px,-1px); box-shadow: 5px 5px 0 ${T.bark}; }
         .hard:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 ${T.bark}; }
-        input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:5px; border-radius:99px; background:${T.sun}; border:none; outline:none; }; border:none; outline:none; }
-        input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:24px; height:24px; border-radius:50%; background:${T.leaf}; border:2.5px solid ${T.bark}; cursor:pointer; }
+                input[type=range]{
+          -webkit-appearance:none;
+          appearance:none;
+          width:100%;
+          height:5px;
+          border-radius:99px;
+          background:${T.leaf};
+          border:none;
+          outline:none;
+        }
+
+        input[type=range]::-webkit-slider-thumb{
+          -webkit-appearance:none;
+          appearance:none;
+          width:24px;
+          height:24px;
+          border-radius:50%;
+          background:${T.bark};
+          border:2.5px solid ${T.bark};
+          cursor:pointer;
+        }
+
+        input[type=range]::-moz-range-thumb{
+          width:24px;
+          height:24px;
+          border-radius:50%;
+          background:${T.bark};
+          border:2.5px solid ${T.bark};
+          cursor:pointer;
+        }; border:2.5px solid ${T.bark}; cursor:pointer; }
         input[type=range]::-moz-range-thumb{ width:24px; height:24px; border-radius:50%; background:${T.leaf}; border:2.5px solid ${T.bark}; cursor:pointer; }
         button:focus-visible, input:focus-visible { outline:3px solid ${T.rust}; outline-offset:3px; }
         .home-hero-grid {
@@ -831,9 +859,7 @@ export default function App() {
         }
 
         .home-disclaimer {
-          display: flex;
-          align-items: flex-start;
-          gap: 8px;
+          display: block;
 
           margin-top: 16px;
 
@@ -1358,7 +1384,6 @@ export default function App() {
               </div>
 
               <div className="home-disclaimer">
-                <ShieldIcon />
                 <div className="home-disclaimer-copy">
                   <p>
                     Multipl is a AMFI registered Mutual Fund Distributor (ARN No. 319633).*Based on historical returns of Liquid Fund category.
