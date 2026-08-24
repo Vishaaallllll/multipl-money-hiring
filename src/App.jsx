@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useRef, useMemo, useEffect } from "react";
 
 /* ============================================================
    MULTIPL — "Give your money a side hustle"
@@ -1623,7 +1623,21 @@ export default function App() {
 function MoneyCompareSlider() {
   const [position, setPosition] = useState(50);
   const [dragging, setDragging] = useState(false);
+  const [introAnimating, setIntroAnimating] = useState(true);
   const frameRef = useRef(null);
+
+  useEffect(() => {
+    // On first render, demonstrate the interaction:
+    // middle → left → right → middle.
+    const timers = [
+      setTimeout(() => setPosition(16), 320),
+      setTimeout(() => setPosition(84), 1120),
+      setTimeout(() => setPosition(50), 2050),
+      setTimeout(() => setIntroAnimating(false), 2750),
+    ];
+
+    return () => timers.forEach(clearTimeout);
+  }, []);
 
   const updatePosition = (clientX) => {
     const el = frameRef.current;
@@ -1631,10 +1645,13 @@ function MoneyCompareSlider() {
 
     const rect = el.getBoundingClientRect();
     const next = ((clientX - rect.left) / rect.width) * 100;
+
     setPosition(Math.max(0, Math.min(100, next)));
   };
 
   const onPointerDown = (e) => {
+    // If the user interacts before the intro finishes, hand control over immediately.
+    setIntroAnimating(false);
     setDragging(true);
     e.currentTarget.setPointerCapture?.(e.pointerId);
     updatePosition(e.clientX);
@@ -1651,6 +1668,14 @@ function MoneyCompareSlider() {
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
   };
+
+  const revealTransition = introAnimating
+    ? "clip-path 720ms cubic-bezier(.22,.8,.25,1)"
+    : "none";
+
+  const sliderTransition = introAnimating
+    ? "left 720ms cubic-bezier(.22,.8,.25,1)"
+    : "none";
 
   return (
     <>
@@ -1676,17 +1701,24 @@ function MoneyCompareSlider() {
           draggable="false"
           style={{
             clipPath: `inset(0 ${100 - position}% 0 0)`,
+            transition: revealTransition,
           }}
         />
 
         <div
           className="compare-divider"
-          style={{ left: `${position}%` }}
+          style={{
+            left: `${position}%`,
+            transition: sliderTransition,
+          }}
         />
 
         <div
           className="compare-handle"
-          style={{ left: `${position}%` }}
+          style={{
+            left: `${position}%`,
+            transition: sliderTransition,
+          }}
         >
           <span>‹</span>
           <span>›</span>
