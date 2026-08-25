@@ -604,7 +604,7 @@ function PageTwo({ svgRef }) {
       xmlns="http://www.w3.org/2000/svg"
       style={{ width: "100%", height: "auto", display: "block" }}
     >
-      {/* Page 2 is completely static artwork. Only the generated date is added in code. */}
+      {/* Page 2 artwork now already contains the four steps */}
       <image
         href={`${import.meta.env.BASE_URL}appointment-letter-page-2.png`}
         x="0"
@@ -614,6 +614,7 @@ function PageTwo({ svgRef }) {
         preserveAspectRatio="none"
       />
 
+      {/* Dynamic date */}
       <text
         x={988}
         y={122}
@@ -625,14 +626,43 @@ function PageTwo({ svgRef }) {
         fill="#FEF8DF"
       >
         <tspan>{letterDate.day}</tspan>
-        <tspan
-          fontSize="11"
-          baselineShift="super"
-          letterSpacing="0.4"
-        >
+        <tspan fontSize="11" baselineShift="super" letterSpacing="0.4">
           {letterDate.suffix}
         </tspan>
         <tspan dx="5">{` ${letterDate.month} ${letterDate.year}`}</tspan>
+      </text>
+
+      {/* Divider + T&C block only */}
+      <line
+        x1="84"
+        y1="1055"
+        x2="1016"
+        y2="1055"
+        stroke={T.rule}
+        strokeWidth="1"
+      />
+
+      <text x="84" y="1100" fontFamily={SANS} fontSize="14.5" fill={T.fade}>
+        Bonus paid in 4 tranches of ₹250 each, tied to add/spend thresholds.
+      </text>
+
+      <text x="84" y="1127" fontFamily={SANS} fontSize="14.5" fill={T.fade}>
+        T&amp;C apply — see multipl.money/gff-bonus. Valid for accounts activated during GFF, 8–11 Sep 2026.
+      </text>
+
+      <text x="84" y="1154" fontFamily={SANS} fontSize="14.5" fill={T.fade}>
+        Amazon voucher fulfilment subject to Multipl&apos;s partner terms.
+      </text>
+
+      <text
+        x="84"
+        y="1205"
+        fontFamily={DISPLAY}
+        fontStyle="italic"
+        fontSize="19"
+        fill={T.fade}
+      >
+        This letter is a joke. The ₹1,000 is not.
       </text>
     </svg>
   );
