@@ -373,16 +373,26 @@ function Sunburst({ x, y, r = 26 }) {
 const W = 1080, PAGE_H = 1350;
 const L = 92, RCOL = 400, RIGHT = W - 92, BAND = 196;
 
-function formatLetterDate(date = new Date()) {
+function getDateParts(date = new Date()) {
   const day = date.getDate();
   const month = date.toLocaleString("en-US", { month: "long" });
   const year = date.getFullYear();
-  return `${day} • ${month} • ${year}`;
+
+  const mod100 = day % 100;
+  let suffix = "th";
+
+  if (mod100 < 11 || mod100 > 13) {
+    if (day % 10 === 1) suffix = "st";
+    else if (day % 10 === 2) suffix = "nd";
+    else if (day % 10 === 3) suffix = "rd";
+  }
+
+  return { day, suffix, month, year };
 }
 
 function Letter({ data, svgRef, sealed }) {
   const { total, jobs, role, name, since } = data;
-  const letterDate = formatLetterDate();
+  const letterDate = getDateParts();
   const modules = useMemo(() => makeQR(`${CONFIG.qrUrl}?e=${data.empNo}`), [data.empNo]);
   const qn = modules.length, qrPx = 148, cell = qrPx / qn;
   const qrX = 92, qrY = 1060;
@@ -447,7 +457,15 @@ function Letter({ data, svgRef, sealed }) {
         letterSpacing="1.1"
         fill="#FEF8DF"
       >
-        {letterDate}
+        <tspan>{letterDate.day}</tspan>
+        <tspan
+          fontSize="11"
+          baselineShift="super"
+          letterSpacing="0.4"
+        >
+          {letterDate.suffix}
+        </tspan>
+        <tspan dx="5">{` ${letterDate.month} ${letterDate.year}`}</tspan>
       </text>
 
       {/* Dynamic content starts only inside the blank cream body. */}
@@ -577,7 +595,7 @@ function Letter({ data, svgRef, sealed }) {
    It is ready to be used as page 2 when we switch download to PDF.
    ============================================================ */
 function PageTwo({ svgRef }) {
-  const letterDate = formatLetterDate();
+  const letterDate = getDateParts();
 
   return (
     <svg
@@ -606,7 +624,15 @@ function PageTwo({ svgRef }) {
         letterSpacing="1.1"
         fill="#FEF8DF"
       >
-        {letterDate}
+        <tspan>{letterDate.day}</tspan>
+        <tspan
+          fontSize="11"
+          baselineShift="super"
+          letterSpacing="0.4"
+        >
+          {letterDate.suffix}
+        </tspan>
+        <tspan dx="5">{` ${letterDate.month} ${letterDate.year}`}</tspan>
       </text>
     </svg>
   );
