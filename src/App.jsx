@@ -1,4 +1,5 @@
 import React, { useState, useRef, useMemo, useEffect } from "react";
+import { jsPDF } from "jspdf";
 
 /* ============================================================
    MULTIPL — "Give your money a side hustle"
@@ -372,15 +373,23 @@ function Sunburst({ x, y, r = 26 }) {
 const W = 1080, PAGE_H = 1350;
 const L = 92, RCOL = 400, RIGHT = W - 92, BAND = 196;
 
+function formatLetterDate(date = new Date()) {
+  const day = date.getDate();
+  const month = date.toLocaleString("en-US", { month: "long" });
+  const year = date.getFullYear();
+  return `${day} • ${month} • ${year}`;
+}
+
 function Letter({ data, svgRef, sealed }) {
-  const { total, jobs, role, name, city, since, empNo } = data;
-  const modules = useMemo(() => makeQR(`${CONFIG.qrUrl}?e=${empNo}`), [empNo]);
-  const qn = modules.length, qrPx = 152, cell = qrPx / qn;
-  const qrX = L, qrY = 1070;
+  const { total, jobs, role, name, since } = data;
+  const letterDate = formatLetterDate();
+  const modules = useMemo(() => makeQR(`${CONFIG.qrUrl}?e=${data.empNo}`), [data.empNo]);
+  const qn = modules.length, qrPx = 148, cell = qrPx / qn;
+  const qrX = 92, qrY = 1060;
 
   const dutyLines = fitLabels(jobs, 42, 2);
-  const roleSize = role.length > 25 ? 40 : 47;
-  const strikeW = `Unemployed since ${since}`.length * 13.2;
+  const roleSize = role.length > 25 ? 39 : 45;
+  const strikeW = `Unemployed since ${since}`.length * 13.0;
 
   const terms = [
     `Joining bonus of ${inr(CONFIG.joiningBonus)} in spending credit.`,
@@ -392,132 +401,212 @@ function Letter({ data, svgRef, sealed }) {
   ];
 
   const Rule = ({ ty, o = 1 }) => (
-    <line x1={L} y1={ty} x2={RIGHT} y2={ty} stroke={T.rule} strokeWidth="1.4" opacity={o} />
+    <line x1={92} y1={ty} x2={988} y2={ty} stroke={T.rule} strokeWidth="1.4" opacity={o} />
   );
+
   const Label = ({ ty, children, fill = T.fade }) => (
-    <text x={L} y={ty} fontFamily={SANS} fontSize="14" fontWeight="700"
+    <text x={92} y={ty} fontFamily={SANS} fontSize="14" fontWeight="700"
       letterSpacing="2.6" fill={fill}>{children}</text>
   );
 
-  let y = 448;
+  let y = 442;
   const rows = [];
   rows.push({ label: "EMPLOYEE", value: `${inr(total)} per month`, y, big: true }); y += 52;
-  rows.push({ label: "DUTIES", value: dutyLines, y }); y += 80;
+  rows.push({ label: "DUTIES", value: dutyLines, y }); y += 78;
   rows.push({ label: "PREV. EMPLOYER", value: "Savings Account", y }); y += 52;
-  const statusY = y; y += 84;
+  const statusY = y; y += 82;
   rows.push({ label: "DAYS WORKED", value: "0", y }); y += 52;
   rows.push({ label: "REPORTS TO", value: `${name || "You"}, Chief Money Officer`, y }); y += 52;
   const termsTop = y;
 
   return (
-    <svg ref={svgRef} viewBox={`0 0 ${W} ${PAGE_H}`} xmlns="http://www.w3.org/2000/svg"
-      style={{ width: "100%", height: "auto", display: "block" }}>
-      <rect width={W} height={PAGE_H} fill={T.cream} />
-
-      {/* letterhead */}
-      <rect width={W} height={BAND} fill={T.bark} />
-      <rect y={BAND - 7} width={W} height="7" fill={T.sun} />
+    <svg
+      ref={svgRef}
+      viewBox={`0 0 ${W} ${PAGE_H}`}
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ width: "100%", height: "auto", display: "block" }}
+    >
+      {/* The uploaded Page 1 artwork supplies the header, cream paper and footer. */}
       <image
-  href="/form-logo.png"
-  x={L}
-  y={62}
-  width="220"
-  height="72"
-  preserveAspectRatio="xMinYMid meet"
-/>
-      <text x={RIGHT} y="88" textAnchor="end" fontFamily={SANS} fontSize="14" fontWeight="700"
-        letterSpacing="3" fill={T.sun}>APPOINTMENT LETTER</text>
-      <text x={RIGHT} y="120" textAnchor="end" fontFamily={MONO} fontSize="15" fill="#B9A88C">
-        {`No. ${empNo.toLocaleString("en-IN")} · ${city || "India"} · Aug 2026`}
+        href={`${import.meta.env.BASE_URL}appointment-letter-page-1.png`}
+        x="0"
+        y="0"
+        width={W}
+        height={PAGE_H}
+        preserveAspectRatio="none"
+      />
+
+      {/* Dynamic header date. Keep the date removed from the PNG template. */}
+      <text
+        x={988}
+        y={122}
+        textAnchor="end"
+        fontFamily={SANS}
+        fontSize="18"
+        fontWeight="600"
+        letterSpacing="1.1"
+        fill="#FEF8DF"
+      >
+        {letterDate}
       </text>
 
-      {/* designation — roman label, rust italic value */}
-      <Label ty={272} fill={T.moss}>DESIGNATION</Label>
-      <text x={L} y={340} fontFamily={DISPLAY} fontStyle="italic" fontSize={roleSize} fill={T.rust}>
+      {/* Dynamic content starts only inside the blank cream body. */}
+      <Label ty={264} fill={T.moss}>DESIGNATION</Label>
+      <text x={92} y={330} fontFamily={DISPLAY} fontStyle="italic" fontSize={roleSize} fill={T.rust}>
         {role}
       </text>
-      <Rule ty={392} />
+      <Rule ty={378} />
 
       {rows.map((r, i) => (
         <g key={i}>
           <Label ty={r.y}>{r.label}</Label>
           {Array.isArray(r.value)
             ? r.value.map((ln, j) => (
-                <text key={j} x={RCOL} y={r.y + j * 32} fontFamily={MONO} fontSize="22" fill={T.nib}>{ln}</text>
+                <text key={j} x={400} y={r.y + j * 31} fontFamily={MONO} fontSize="21" fill={T.nib}>
+                  {ln}
+                </text>
               ))
             : (
-              <text x={RCOL} y={r.y} fontFamily={MONO} fontSize={r.big ? 28 : 22}
-                fontWeight={r.big ? 700 : 400} fill={T.nib}>{r.value}</text>
+              <text
+                x={400}
+                y={r.y}
+                fontFamily={MONO}
+                fontSize={r.big ? 27 : 21}
+                fontWeight={r.big ? 700 : 400}
+                fill={T.nib}
+              >
+                {r.value}
+              </text>
             )}
         </g>
       ))}
 
-      {/* STATUS — struck original → highlighted effective */}
       <Label ty={statusY}>STATUS</Label>
-      <text x={RCOL} y={statusY} fontFamily={MONO} fontSize="22" fill={T.fade}>
+      <text x={400} y={statusY} fontFamily={MONO} fontSize="21" fill={T.fade}>
         {`Unemployed since ${since}`}
       </text>
-      <line x1={RCOL} y1={statusY - 7} x2={RCOL + strikeW} y2={statusY - 7}
-        stroke={T.alarm} strokeWidth="2" />
-      <rect x={RCOL - 12} y={statusY + 12} width="282" height="42" rx="21"
-        fill={T.leaf} fillOpacity="0.18" stroke={T.leaf} strokeWidth="1.5" />
-      <text x={RCOL} y={statusY + 40} fontFamily={MONO} fontSize="22" fontWeight="700" fill={T.moss}>
+      <line
+        x1={400}
+        y1={statusY - 7}
+        x2={400 + strikeW}
+        y2={statusY - 7}
+        stroke={T.alarm}
+        strokeWidth="2"
+      />
+      <rect
+        x={388}
+        y={statusY + 12}
+        width="282"
+        height="42"
+        rx="21"
+        fill={T.leaf}
+        fillOpacity="0.18"
+        stroke={T.leaf}
+        strokeWidth="1.5"
+      />
+      <text x={400} y={statusY + 40} fontFamily={MONO} fontSize="21" fontWeight="700" fill={T.moss}>
         Employed from today
       </text>
 
-      {/* terms */}
       <Rule ty={termsTop - 26} />
       <Label ty={termsTop + 16}>TERMS OF EMPLOYMENT</Label>
+
       {terms.map((t, i) => (
         <g key={i}>
-          <text x={L} y={termsTop + 56 + i * 30} fontFamily={SANS} fontSize="17" fontWeight="700" fill={T.moss}>
+          <text x={92} y={termsTop + 54 + i * 29} fontFamily={SANS} fontSize="16.5" fontWeight="700" fill={T.moss}>
             {String(i + 1).padStart(2, "0")}
           </text>
-          <text x={L + 44} y={termsTop + 56 + i * 30} fontFamily={MONO} fontSize="18" fill={T.nib}>{t}</text>
+          <text x={136} y={termsTop + 54 + i * 29} fontFamily={MONO} fontSize="17.2" fill={T.nib}>
+            {t}
+          </text>
         </g>
       ))}
 
-      {/* QR */}
+      {/* QR + countersign area */}
       {modules.map((rowArr, r) =>
         rowArr.map((v, c) =>
           v ? (
-            <rect key={`${r}-${c}`} x={qrX + c * cell} y={qrY + r * cell}
-              width={cell + 0.5} height={cell + 0.5} fill={T.bark} />
+            <rect
+              key={`${r}-${c}`}
+              x={qrX + c * cell}
+              y={qrY + r * cell}
+              width={cell + 0.5}
+              height={cell + 0.5}
+              fill={T.bark}
+            />
           ) : null
         )
       )}
-      <text x={qrX + qrPx + 40} y={qrY + 48} fontFamily={DISPLAY} fontStyle="italic"
-        fontSize="32" fill={T.rust}>Countersign here ↗</text>
-      <text x={qrX + qrPx + 40} y={qrY + 84} fontFamily={MONO} fontSize="17" fill={T.fade}>
+
+      <text x={qrX + qrPx + 38} y={qrY + 46} fontFamily={DISPLAY} fontStyle="italic"
+        fontSize="31" fill={T.rust}>
+        Countersign here ↗
+      </text>
+      <text x={qrX + qrPx + 38} y={qrY + 82} fontFamily={MONO} fontSize="16.5" fill={T.fade}>
         Scan to open a Multipl
       </text>
-      <text x={qrX + qrPx + 40} y={qrY + 108} fontFamily={MONO} fontSize="17" fill={T.fade}>
+      <text x={qrX + qrPx + 38} y={qrY + 105} fontFamily={MONO} fontSize="16.5" fill={T.fade}>
         spending account.
       </text>
-      <text x={qrX + qrPx + 40} y={qrY + 146} fontFamily={SANS} fontSize="16" fontWeight="700"
-        letterSpacing="0.4" fill={T.moss}>{CONFIG.hashtag}</text>
+      <text x={qrX + qrPx + 38} y={qrY + 141} fontFamily={SANS} fontSize="15.5" fontWeight="700"
+        letterSpacing="0.35" fill={T.moss}>
+        {CONFIG.hashtag}
+      </text>
 
       {/* seal */}
-      <g transform={`translate(890 ${qrY + 82}) rotate(-9)`} opacity={sealed ? 1 : 0} className="seal">
-        <circle r="68" fill={T.rust} fillOpacity="0.08" stroke={T.rust} strokeWidth="3.5" />
-        <circle r="58" fill="none" stroke={T.rust} strokeWidth="1.2" opacity="0.6" />
-        <text x="0" y="-6" textAnchor="middle" fontFamily={SANS} fontSize="24" fontWeight="800"
-          letterSpacing="1.6" fill={T.rust}>HIRED</text>
-        <line x1="-36" y1="8" x2="36" y2="8" stroke={T.rust} strokeWidth="1.2" opacity="0.6" />
-        <text x="0" y="30" textAnchor="middle" fontFamily={MONO} fontSize="12"
-          letterSpacing="0.9" fill={T.rust} opacity="0.9">MULTIPL HR</text>
+      <g transform={`translate(892 ${qrY + 78}) rotate(-9)`} opacity={sealed ? 1 : 0} className="seal">
+        <circle r="64" fill={T.rust} fillOpacity="0.08" stroke={T.rust} strokeWidth="3.2" />
+        <circle r="55" fill="none" stroke={T.rust} strokeWidth="1.2" opacity="0.6" />
+        <text x="0" y="-6" textAnchor="middle" fontFamily={SANS} fontSize="23" fontWeight="800"
+          letterSpacing="1.5" fill={T.rust}>
+          HIRED
+        </text>
+        <line x1="-34" y1="8" x2="34" y2="8" stroke={T.rust} strokeWidth="1.2" opacity="0.6" />
+        <text x="0" y="29" textAnchor="middle" fontFamily={MONO} fontSize="11.5"
+          letterSpacing="0.9" fill={T.rust} opacity="0.9">
+          MULTIPL HR
+        </text>
       </g>
+    </svg>
+  );
+}
 
-      {/* footer */}
-      <Rule ty={1264} o={0.9} />
-      <text x={L} y={1292} fontFamily={MONO} fontSize="12.5" fill={T.fade}>
-        *Instant redemption is subject to SEBI limits. Mutual fund investments are subject to market risks.
-      </text>
-      <text x={L} y={1314} fontFamily={MONO} fontSize="12.5" fill={T.fade}>
-        Read all scheme-related documents carefully. AMFI registered, ARN-319633.
-      </text>
-      <text x={L} y={1336} fontFamily={MONO} fontSize="12.5" fill={T.fade}>
-        This letter is a joke. The spending account is not.
+/* ============================================================
+   PAGE 2 — STATIC ONBOARDING BONUS
+   This is intentionally NOT shown in the website flow.
+   It is ready to be used as page 2 when we switch download to PDF.
+   ============================================================ */
+function PageTwo({ svgRef }) {
+  const letterDate = formatLetterDate();
+
+  return (
+    <svg
+      ref={svgRef}
+      viewBox={`0 0 ${W} ${PAGE_H}`}
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ width: "100%", height: "auto", display: "block" }}
+    >
+      {/* Page 2 is completely static artwork. Only the generated date is added in code. */}
+      <image
+        href={`${import.meta.env.BASE_URL}appointment-letter-page-2.png`}
+        x="0"
+        y="0"
+        width={W}
+        height={PAGE_H}
+        preserveAspectRatio="none"
+      />
+
+      <text
+        x={988}
+        y={122}
+        textAnchor="end"
+        fontFamily={SANS}
+        fontSize="18"
+        fontWeight="600"
+        letterSpacing="1.1"
+        fill="#FEF8DF"
+      >
+        {letterDate}
       </text>
     </svg>
   );
@@ -538,6 +627,7 @@ export default function App() {
   const [screenDirection, setScreenDirection] = useState("forward");
   const [showConfetti, setShowConfetti] = useState(false);
   const svgRef = useRef(null);
+  const pageTwoRef = useRef(null);
 
   const chosen = Object.keys(picked);
   const total = chosen.reduce((s, k) => s + BANDS[picked[k]].value, 0);
@@ -577,57 +667,123 @@ export default function App() {
   };
 
   const download = async () => {
-  const svg = svgRef.current;
-  if (!svg) return;
+    const pageOneSvg = svgRef.current;
+    const pageTwoSvg = pageTwoRef.current;
 
-  const logoRes = await fetch("/form-logo.png");
-  const logoBlob = await logoRes.blob();
+    if (!pageOneSvg || !pageTwoSvg) return;
 
-  const logoDataUrl = await new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result);
-    reader.readAsDataURL(logoBlob);
-  });
+    const fileToDataUrl = async (path) => {
+      const res = await fetch(path);
+      if (!res.ok) throw new Error(`Could not load ${path}`);
 
-  const clonedSvg = svg.cloneNode(true);
+      const blob = await res.blob();
 
-  const imageEl = clonedSvg.querySelector('image[href="/form-logo.png"]');
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    };
 
-  if (imageEl) {
-    imageEl.setAttribute("href", logoDataUrl);
-  }
+    const svgToPngDataUrl = async (sourceSvg, templatePath) => {
+      const templateDataUrl = await fileToDataUrl(templatePath);
 
-  const s = new XMLSerializer().serializeToString(clonedSvg);
+      const clonedSvg = sourceSvg.cloneNode(true);
 
-  const url = URL.createObjectURL(
-    new Blob([s], { type: "image/svg+xml;charset=utf-8" })
-  );
+      // Inline the PNG template so it survives SVG -> canvas rendering.
+      const templateImage = clonedSvg.querySelector("image");
+      if (templateImage) {
+        templateImage.setAttribute("href", templateDataUrl);
+        templateImage.setAttributeNS(
+          "http://www.w3.org/1999/xlink",
+          "xlink:href",
+          templateDataUrl
+        );
+      }
 
-  const img = new Image();
+      const serialized = new XMLSerializer().serializeToString(clonedSvg);
+      const svgBlob = new Blob(
+        [serialized],
+        { type: "image/svg+xml;charset=utf-8" }
+      );
+      const svgUrl = URL.createObjectURL(svgBlob);
 
-  img.onload = () => {
-    const cv = document.createElement("canvas");
+      try {
+        const renderedImage = await new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = reject;
+          image.src = svgUrl;
+        });
 
-    cv.width = W * 2;
-    cv.height = PAGE_H * 2;
+        const canvas = document.createElement("canvas");
+        canvas.width = W * 2;
+        canvas.height = PAGE_H * 2;
 
-    const ctx = cv.getContext("2d");
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = T.cream;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(renderedImage, 0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = T.cream;
-    ctx.fillRect(0, 0, cv.width, cv.height);
+        return canvas.toDataURL("image/png", 1);
+      } finally {
+        URL.revokeObjectURL(svgUrl);
+      }
+    };
 
-    ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    try {
+      // PAGE 1 = dynamically generated appointment letter.
+      const pageOnePng = await svgToPngDataUrl(
+        pageOneSvg,
+        `${import.meta.env.BASE_URL}appointment-letter-page-1.png`
+      );
 
-    URL.revokeObjectURL(url);
+      // PAGE 2 = fixed onboarding-bonus layout + fixed copy.
+      // It exists off-screen only and is never shown in the web flow.
+      const pageTwoPng = await svgToPngDataUrl(
+        pageTwoSvg,
+        `${import.meta.env.BASE_URL}appointment-letter-page-2.png`
+      );
 
-    const a = document.createElement("a");
-    a.download = `multipl-appointment-letter-${empNo}.png`;
-    a.href = cv.toDataURL("image/png");
-    a.click();
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "px",
+        format: [W, PAGE_H],
+        hotfixes: ["px_scaling"],
+        compress: true,
+      });
+
+      pdf.addImage(
+        pageOnePng,
+        "PNG",
+        0,
+        0,
+        W,
+        PAGE_H,
+        undefined,
+        "FAST"
+      );
+
+      pdf.addPage([W, PAGE_H], "portrait");
+
+      pdf.addImage(
+        pageTwoPng,
+        "PNG",
+        0,
+        0,
+        W,
+        PAGE_H,
+        undefined,
+        "FAST"
+      );
+
+      pdf.save(`multipl-appointment-letter-${empNo}.pdf`);
+    } catch (error) {
+      console.error("PDF download failed:", error);
+      alert("Could not create the PDF. Please try again.");
+    }
   };
-
-  img.src = url;
-};
 
   const caption = `My money just got hired. ${letterData.role}. ${inr(total)} a month, unemployed since ${letterData.since}. ${CONFIG.handle} ${CONFIG.hashtag}`;
   const copyCaption = () => {
@@ -642,6 +798,20 @@ export default function App() {
   return (
     <div style={{ minHeight: "100vh", background: T.sun, fontFamily: SANS_UI, color: T.bark }}>
       {showConfetti && <ConfettiBurst />}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          left: "-100000px",
+          top: 0,
+          width: W,
+          height: PAGE_H,
+          overflow: "hidden",
+          pointerEvents: "none",
+        }}
+      >
+        <PageTwo svgRef={pageTwoRef} />
+      </div>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&display=swap');
 
