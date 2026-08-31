@@ -627,7 +627,7 @@ function PageTwo({ svgRef }) {
     >
       {/* Page 2 is now 100% static artwork. Nothing is drawn over it. */}
       <image
-        href={`${import.meta.env.BASE_URL}Appointment-letter-page-2.png`}
+        href={`${import.meta.env.BASE_URL}appointment-letter-page-2.png`}
         x="0"
         y="0"
         width={W}
@@ -769,7 +769,7 @@ export default function App() {
       // It exists off-screen only and is never shown in the web flow.
       const pageTwoPng = await svgToPngDataUrl(
         pageTwoSvg,
-        `${import.meta.env.BASE_URL}Appointment-letter-page-2.png`
+        `${import.meta.env.BASE_URL}appointment-letter-page-2.png`
       );
 
       const pdf = new jsPDF({
