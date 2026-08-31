@@ -418,7 +418,7 @@ function Letter({ data, svgRef, sealed }) {
   const letterDate = getDateParts();
   const modules = useMemo(() => makeQR(`${CONFIG.qrUrl}?e=${data.empNo}`), [data.empNo]);
   const qn = modules.length, qrPx = 148, cell = qrPx / qn;
-  const qrX = 92, qrY = 1018;
+  const qrX = 92, qrY = 1060;
 
   const dutyLines = fitLabels(jobs, 42, 2);
   const roleSize = role.length > 25 ? 39 : 45;
