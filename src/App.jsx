@@ -437,8 +437,8 @@ function Letter({ data, svgRef, sealed }) {
     <line x1={92} y1={ty} x2={988} y2={ty} stroke={T.rule} strokeWidth="1.4" opacity={o} />
   );
 
-  const Label = ({ ty, children, fill = T.fade }) => (
-    <text x={92} y={ty} fontFamily={SANS} fontSize="14" fontWeight="700"
+  const Label = ({ ty, children, fill = T.fade, fontSize = "14" }) => (
+    <text x={92} y={ty} fontFamily={SANS} fontSize={fontSize} fontWeight="700"
       letterSpacing="2.6" fill={fill}>{children}</text>
   );
 
@@ -500,10 +500,10 @@ function Letter({ data, svgRef, sealed }) {
 
       {rows.map((r, i) => (
         <g key={i}>
-          <Label ty={r.y}>{r.label}</Label>
+          <Label ty={r.y} fontSize="20">{r.label}</Label>
           {Array.isArray(r.value)
             ? r.value.map((ln, j) => (
-                <text key={j} x={400} y={r.y + j * 31} fontFamily={MONO} fontSize="21" fill={T.nib}>
+                <text key={j} x={400} y={r.y + j * 31} fontFamily={MONO} fontSize="20" fill={T.nib}>
                   {ln}
                 </text>
               ))
@@ -512,7 +512,7 @@ function Letter({ data, svgRef, sealed }) {
                 x={400}
                 y={r.y}
                 fontFamily={MONO}
-                fontSize={r.big ? 27 : 21}
+                fontSize="20"
                 fontWeight={r.big ? 700 : 400}
                 fill={T.nib}
               >
@@ -522,8 +522,8 @@ function Letter({ data, svgRef, sealed }) {
         </g>
       ))}
 
-      <Label ty={statusY}>STATUS</Label>
-      <text x={400} y={statusY} fontFamily={MONO} fontSize="21" fill={T.fade}>
+      <Label ty={statusY} fontSize="20">STATUS</Label>
+      <text x={400} y={statusY} fontFamily={MONO} fontSize="20" fill={T.fade}>
         {`Unemployed since ${since}`}
       </text>
       <line
@@ -545,7 +545,7 @@ function Letter({ data, svgRef, sealed }) {
         stroke={T.leaf}
         strokeWidth="1.5"
       />
-      <text x={400} y={statusY + 40} fontFamily={MONO} fontSize="21" fontWeight="700" fill={T.moss}>
+      <text x={400} y={statusY + 40} fontFamily={MONO} fontSize="20" fontWeight="700" fill={T.moss}>
         Employed from today
       </text>
 
