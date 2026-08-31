@@ -39,18 +39,15 @@ const T = {
   rule: "#D9CBA6",
 };
 
-/* Webfonts are used for the app chrome. The letter deliberately uses
-   Georgia + system stacks: an SVG serialised to a blob for PNG export
-   cannot resolve external @font-face, so anything else would make the
-   download differ from what's on screen. For production, embed the real
-   brand faces as base64 inside the SVG. */
+/* Website UI and letter copy use Gilroy. Rust-coloured editorial text
+   keeps the serif display face. Existing fontWeight values control the
+   respective Regular / SemiBold / Bold / ExtraBold treatments. */
 const DISPLAY_UI = "'Gilroy', Arial, sans-serif";
 const SANS_UI = "'Gilroy', Arial, sans-serif";
 const DISPLAY = "Georgia, 'Times New Roman', serif";
 const SANS =
   "ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-const MONO =
-  "'DejaVu Sans Mono', 'Noto Sans Mono', 'Courier New', ui-monospace, monospace";
+const MONO = "'Gilroy', Arial, sans-serif";
 
 const CONFIG = {
   qrUrl: import.meta.env.VITE_QR_URL || "https://multipl.in/hire",
@@ -308,6 +305,31 @@ const DECADES = [
   { id: "2020s", label: "In the 2020s", year: "2021" },
 ];
 
+function RangeWithStops({ value, onChange, ariaLabel }) {
+  return (
+    <div className="range-with-stops">
+      <input
+        type="range"
+        min="0"
+        max="4"
+        step="1"
+        value={value}
+        aria-label={ariaLabel}
+        onChange={onChange}
+      />
+      <div className="range-stop-layer" aria-hidden="true">
+        {[0, 1, 2, 3, 4].map((stop) => (
+          <span
+            key={stop}
+            className={`range-stop ${Number(value) === stop ? "is-current" : ""}`}
+            style={{ left: `${(stop / 4) * 100}%` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function designation(picked, total) {
   const top = Object.keys(picked).sort((a, b) => BANDS[picked[b]].value - BANDS[picked[a]].value)[0];
   const n = Object.keys(picked).length;
@@ -376,6 +398,7 @@ const L = 92, RCOL = 400, RIGHT = W - 92, BAND = 196;
 function getDateParts(date = new Date()) {
   const day = date.getDate();
   const month = date.toLocaleString("en-US", { month: "long" });
+  const weekday = date.toLocaleString("en-US", { weekday: "long" });
   const year = date.getFullYear();
 
   const mod100 = day % 100;
@@ -387,7 +410,7 @@ function getDateParts(date = new Date()) {
     else if (day % 10 === 3) suffix = "rd";
   }
 
-  return { day, suffix, month, year };
+  return { day, suffix, month, year, weekday };
 }
 
 function Letter({ data, svgRef, sealed }) {
@@ -436,7 +459,7 @@ function Letter({ data, svgRef, sealed }) {
       xmlns="http://www.w3.org/2000/svg"
       style={{ width: "100%", height: "auto", display: "block" }}
     >
-      {/* The uploaded Page 1 artwork supplies the header, cream paper and footer. */}
+      {/* New Page 1 artwork supplies the logo/header, Private & Confidential line and footer. */}
       <image
         href={`${import.meta.env.BASE_URL}appointment-letter-page-1.png`}
         x="0"
@@ -446,29 +469,29 @@ function Letter({ data, svgRef, sealed }) {
         preserveAspectRatio="none"
       />
 
-      {/* Dynamic header date. Keep the date removed from the PNG template. */}
+      {/* Live weekday + date, aligned opposite "Private & Confidential". */}
       <text
         x={988}
-        y={122}
+        y={226}
         textAnchor="end"
         fontFamily={SANS}
         fontSize="18"
         fontWeight="600"
-        letterSpacing="1.1"
-        fill="#FEF8DF"
+        letterSpacing="0.15"
+        fill="#111111"
       >
-        <tspan>{letterDate.day}</tspan>
+        <tspan>{`${letterDate.weekday} · ${letterDate.day}`}</tspan>
         <tspan
           fontSize="11"
           baselineShift="super"
-          letterSpacing="0.4"
+          letterSpacing="0"
         >
           {letterDate.suffix}
         </tspan>
-        <tspan dx="5">{` ${letterDate.month} ${letterDate.year}`}</tspan>
+        <tspan dx="4">{` ${letterDate.month} ${letterDate.year}`}</tspan>
       </text>
 
-      {/* Dynamic content starts only inside the blank cream body. */}
+      {/* Dynamic appointment-letter content sits inside the blank Page 1 body. */}
       <Label ty={264} fill={T.moss}>DESIGNATION</Label>
       <text x={92} y={330} fontFamily={DISPLAY} fontStyle="italic" fontSize={roleSize} fill={T.rust}>
         {role}
@@ -595,8 +618,6 @@ function Letter({ data, svgRef, sealed }) {
    It is ready to be used as page 2 when we switch download to PDF.
    ============================================================ */
 function PageTwo({ svgRef }) {
-  const letterDate = getDateParts();
-
   return (
     <svg
       ref={svgRef}
@@ -604,7 +625,7 @@ function PageTwo({ svgRef }) {
       xmlns="http://www.w3.org/2000/svg"
       style={{ width: "100%", height: "auto", display: "block" }}
     >
-      {/* Page 2 artwork now already contains the four steps */}
+      {/* Page 2 is now 100% static artwork. Nothing is drawn over it. */}
       <image
         href={`${import.meta.env.BASE_URL}appointment-letter-page-2.png`}
         x="0"
@@ -613,57 +634,6 @@ function PageTwo({ svgRef }) {
         height={PAGE_H}
         preserveAspectRatio="none"
       />
-
-      {/* Dynamic date */}
-      <text
-        x={988}
-        y={122}
-        textAnchor="end"
-        fontFamily={SANS}
-        fontSize="18"
-        fontWeight="600"
-        letterSpacing="1.1"
-        fill="#FEF8DF"
-      >
-        <tspan>{letterDate.day}</tspan>
-        <tspan fontSize="11" baselineShift="super" letterSpacing="0.4">
-          {letterDate.suffix}
-        </tspan>
-        <tspan dx="5">{` ${letterDate.month} ${letterDate.year}`}</tspan>
-      </text>
-
-      {/* Divider + T&C block only */}
-      <line
-        x1="84"
-        y1="1055"
-        x2="1016"
-        y2="1055"
-        stroke={T.rule}
-        strokeWidth="1"
-      />
-
-      <text x="84" y="1100" fontFamily={SANS} fontSize="14.5" fill={T.fade}>
-        Bonus paid in 4 tranches of ₹250 each, tied to add/spend thresholds.
-      </text>
-
-      <text x="84" y="1127" fontFamily={SANS} fontSize="14.5" fill={T.fade}>
-        T&amp;C apply — see multipl.money/gff-bonus. Valid for accounts activated during GFF, 8–11 Sep 2026.
-      </text>
-
-      <text x="84" y="1154" fontFamily={SANS} fontSize="14.5" fill={T.fade}>
-        Amazon voucher fulfilment subject to Multipl&apos;s partner terms.
-      </text>
-
-      <text
-        x="84"
-        y="1205"
-        fontFamily={DISPLAY}
-        fontStyle="italic"
-        fontSize="19"
-        fill={T.fade}
-      >
-        This letter is a joke. The ₹1,000 is not.
-      </text>
     </svg>
   );
 }
@@ -928,37 +898,81 @@ export default function App() {
         .hard { transition: transform .12s ease, box-shadow .12s ease; }
         .hard:hover { transform: translate(-1px,-1px); box-shadow: 5px 5px 0 ${T.bark}; }
         .hard:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 ${T.bark}; }
-                input[type=range]{
-          -webkit-appearance:none;
-          appearance:none;
-          width:100%;
-          height:5px;
-          border-radius:99px;
-          background:${T.leaf};
-          border:none;
-          outline:none;
+        .range-with-stops {
+          position: relative;
+          width: 100%;
+          height: 26px;
+          display: flex;
+          align-items: center;
         }
 
-        input[type=range]::-webkit-slider-thumb{
-          -webkit-appearance:none;
-          appearance:none;
-          width:24px;
-          height:24px;
-          border-radius:50%;
-          background:${T.bark};
-          border:2.5px solid ${T.bark};
-          cursor:pointer;
+        .range-with-stops input[type=range] {
+          position: relative;
+          z-index: 2;
+          -webkit-appearance: none;
+          appearance: none;
+          width: 100%;
+          height: 5px;
+          margin: 0;
+          border-radius: 99px;
+          background: ${T.leaf};
+          border: none;
+          outline: none;
+          cursor: pointer;
         }
 
-        input[type=range]::-moz-range-thumb{
-          width:24px;
-          height:24px;
-          border-radius:50%;
-          background:${T.bark};
-          border:2.5px solid ${T.bark};
-          cursor:pointer;
-        }; border:2.5px solid ${T.bark}; cursor:pointer; }
-        input[type=range]::-moz-range-thumb{ width:24px; height:24px; border-radius:50%; background:${T.leaf}; border:2.5px solid ${T.bark}; cursor:pointer; }
+        .range-stop-layer {
+          position: absolute;
+          z-index: 3;
+          left: 0;
+          right: 0;
+          top: 50%;
+          height: 0;
+          pointer-events: none;
+        }
+
+        .range-stop {
+          position: absolute;
+          top: 0;
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: ${T.bark};
+          border: 2px solid ${T.cream};
+          transform: translate(-50%, -50%);
+          box-shadow: 0 0 0 1px rgba(49, 23, 9, .12);
+        }
+
+        .range-stop.is-current {
+          opacity: 0;
+        }
+
+        .range-with-stops input[type=range]::-webkit-slider-thumb {
+          position: relative;
+          z-index: 5;
+          -webkit-appearance: none;
+          appearance: none;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: ${T.bark};
+          border: 2.5px solid ${T.bark};
+          cursor: grab;
+        }
+
+        .range-with-stops input[type=range]:active::-webkit-slider-thumb {
+          cursor: grabbing;
+        }
+
+        .range-with-stops input[type=range]::-moz-range-thumb {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: ${T.bark};
+          border: 2.5px solid ${T.bark};
+          cursor: grab;
+        }
+
         button:focus-visible, input:focus-visible { outline:3px solid ${T.rust}; outline-offset:3px; }
         .home-hero-grid {
           width: 100%;
@@ -1700,8 +1714,13 @@ export default function App() {
                     <span style={{ fontSize: 15.5, fontWeight: 700 }}>{j.label}</span>
                     <span style={{ fontSize: 14.5, fontWeight: 700, color: T.moss }}>{BANDS[picked[k]].label}</span>
                   </div>
-                  <input type="range" min="0" max="4" step="1" value={picked[k]} aria-label={j.label}
-                    onChange={(e) => setPicked((p) => ({ ...p, [k]: +e.target.value }))} />
+                  <RangeWithStops
+                    value={picked[k]}
+                    ariaLabel={j.label}
+                    onChange={(e) =>
+                      setPicked((p) => ({ ...p, [k]: +e.target.value }))
+                    }
+                  />
                 </div>
               );
             })}
